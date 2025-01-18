@@ -1,10 +1,18 @@
 from flask import Flask, render_template, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from dotenv import load_dotenv
 import os
 import json
 import requests
 from authlib.integrations.flask_client import OAuth
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG)
+
+
+load_dotenv()
 
 application = app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
@@ -31,6 +39,7 @@ oauth.register(
     authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
     client_kwargs={'scope': 'openid email profile'},
+    server_metadata_url=GOOGLE_DISCOVERY_URL,
 )
 
 
@@ -85,10 +94,13 @@ def google_login():
 
 @app.route('/callback')
 def callback():
+
+    print("Expected iss:", "https://accounts.google.com")
     token = oauth.google.authorize_access_token()
     user_info = oauth.google.parse_id_token(token)
+    print("JWT iss:", token["iss"])
     session["user_info"] = user_info
-    return redirect(url_for("index"))
+    return redirect(url_for('cars'))
 
 
 @app.route('/cars')
