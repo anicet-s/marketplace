@@ -7,6 +7,7 @@ import json
 import requests
 from authlib.integrations.flask_client import OAuth
 import logging
+from jose import jwt
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -33,7 +34,7 @@ oauth.register(
     name='google',
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
-    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_url='https://oauth2.googleapis.com/token',
     access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
@@ -62,7 +63,7 @@ class Item(db.Model):
 # Login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'google_login'
 
 
 @login_manager.user_loader
@@ -75,7 +76,7 @@ def load_user(user_id):
 def index():
     if current_user.is_authenticated:
         return render_template('home.html')
-    return render_template('login.html')
+    return render_template('cars.html')
 
 
 @app.route('/furniture')
@@ -89,7 +90,8 @@ def furniture():
 def google_login():
     # Initialize OAuth flow with Google
     # Redirect to Google's authentication page
-    return oauth.google.authorize_redirect(redirect_uri=url_for('callback', _external=True))
+    session['nonce'] = os.urandom(16).hex()
+    return oauth.google.authorize_redirect(redirect_uri=url_for('callback', _external=True), nonce=session['nonce'])
 
 
 @app.route('/callback')
@@ -97,8 +99,7 @@ def callback():
 
     print("Expected iss:", "https://accounts.google.com")
     token = oauth.google.authorize_access_token()
-    user_info = oauth.google.parse_id_token(token)
-    print("JWT iss:", token["iss"])
+    user_info = oauth.google.parse_id_token(token, nonce=session['nonce'])
     session["user_info"] = user_info
     return redirect(url_for('cars'))
 
