@@ -9,17 +9,17 @@
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-    <a href="/furniture" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <a href="{{ url_for('furniture') }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
         <h2 class="text-2xl font-bold mb-4">Furniture</h2>
         <p class="text-gray-600">Browse our collection of high-quality furniture</p>
     </a>
 
-    <a href="/cars" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <a href="{{ url_for('cars') }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
         <h2 class="text-2xl font-bold mb-4">Cars</h2>
         <p class="text-gray-600">Explore our selection of vehicles</p>
     </a>
 
-    <a href="/houses" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <a href="{{ url_for('houses') }}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
         <h2 class="text-2xl font-bold mb-4">Houses</h2>
         <p class="text-gray-600">Find your dream home</p>
     </a>

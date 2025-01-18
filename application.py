@@ -9,9 +9,7 @@ from authlib.integrations.flask_client import OAuth
 import logging
 from jose import jwt
 
-
 logging.basicConfig(level=logging.DEBUG)
-
 
 load_dotenv()
 
@@ -76,7 +74,7 @@ def load_user(user_id):
 def index():
     if current_user.is_authenticated:
         return render_template('home.html')
-    return render_template('cars.html')
+    return render_template('login.html')
 
 
 @app.route('/furniture')
@@ -96,12 +94,10 @@ def google_login():
 
 @app.route('/callback')
 def callback():
-
-    print("Expected iss:", "https://accounts.google.com")
     token = oauth.google.authorize_access_token()
     user_info = oauth.google.parse_id_token(token, nonce=session['nonce'])
     session["user_info"] = user_info
-    return redirect(url_for('cars'))
+    return render_template('home.html')
 
 
 @app.route('/cars')
