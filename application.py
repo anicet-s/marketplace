@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from flask import Flask, render_template, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -7,7 +9,7 @@ import json
 import requests
 from authlib.integrations.flask_client import OAuth
 import logging
-from jose import jwt
+from sqlalchemy.dialects.postgresql import BIGINT
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -19,6 +21,9 @@ app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/catalogmenuwithusers'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_PERMANENT'] = True
+
 db = SQLAlchemy(app)
 
 # Google OAuth configuration
@@ -28,7 +33,7 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 
 # Configure OAuth with Authlib
 oauth = OAuth(app)
-oauth.register(
+google = oauth.register(
     name='google',
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
@@ -44,7 +49,7 @@ oauth.register(
 
 # User model
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(BIGINT, primary_key=True)
     email = db.Column(db.String(100), unique=True)
     name = db.Column(db.String(100))
 
@@ -61,7 +66,7 @@ class Item(db.Model):
 # Login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'google_login'
+login_manager.login_view = 'login'
 
 
 @login_manager.user_loader
@@ -72,6 +77,7 @@ def load_user(user_id):
 # Routes
 @app.route('/')
 def index():
+    print(current_user.is_authenticated)
     if current_user.is_authenticated:
         return render_template('home.html')
     return render_template('login.html')
@@ -85,19 +91,38 @@ def furniture():
 
 
 @app.route('/login')
-def google_login():
+def login():
     # Initialize OAuth flow with Google
     # Redirect to Google's authentication page
     session['nonce'] = os.urandom(16).hex()
-    return oauth.google.authorize_redirect(redirect_uri=url_for('callback', _external=True), nonce=session['nonce'])
+    return oauth.google.authorize_redirect(redirect_uri=url_for('auth', _external=True), nonce=session['nonce'])
 
 
-@app.route('/callback')
-def callback():
+@app.route('/auth')
+def auth():
     token = oauth.google.authorize_access_token()
-    user_info = oauth.google.parse_id_token(token, nonce=session['nonce'])
-    session["user_info"] = user_info
-    return render_template('home.html')
+    user_info = google.get('userinfo').json()
+    session['user_info'] = user_info
+    # Extract user details
+    id = user_info['id']
+    email = user_info['email']
+    name = user_info['name']
+
+    # Check if the user exists in the database
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Create a new user if not found
+        user = User(id = int(id), email = email, name = name)
+        db.session.add(user)
+        db.session.commit()
+    login_user(user)
+    return redirect('/')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/')
 
 
 @app.route('/cars')

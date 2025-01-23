@@ -11,3 +11,4 @@ setuptools==75.8.0
 Authlib==1.4.0
 requests~=2.32.3
 python-jose==3.3.0
+SQLAlchemy~=2.0.37
