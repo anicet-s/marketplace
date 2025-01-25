@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv()
 
-application = app = Flask(__name__)
+app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 # Database configuration

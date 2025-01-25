@@ -12,3 +12,4 @@ Authlib==1.4.0
 requests~=2.32.3
 python-jose==3.3.0
 SQLAlchemy~=2.0.37
+Gunicorn==22.0.0
