@@ -15,16 +15,16 @@ logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv()
 
-app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
+application = Flask(__name__)
+application.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/catalogmenuwithusers'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
-app.config['SESSION_PERMANENT'] = True
+application.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/catalogmenuwithusers'
+application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+application.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+application.config['SESSION_PERMANENT'] = True
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(application)
 
 # Google OAuth configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
@@ -32,7 +32,7 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
 # Configure OAuth with Authlib
-oauth = OAuth(app)
+oauth = OAuth(application)
 google = oauth.register(
     name='google',
     client_id=GOOGLE_CLIENT_ID,
@@ -65,7 +65,7 @@ class Item(db.Model):
 
 # Login manager
 login_manager = LoginManager()
-login_manager.init_app(app)
+login_manager.init_app(application)
 login_manager.login_view = 'login'
 
 
@@ -75,7 +75,7 @@ def load_user(user_id):
 
 
 # Routes
-@app.route('/')
+@application.route('/')
 def index():
     print(current_user.is_authenticated)
     if current_user.is_authenticated:
@@ -83,14 +83,14 @@ def index():
     return render_template('login.html')
 
 
-@app.route('/furniture')
+@application.route('/furniture')
 @login_required
 def furniture():
     items = Item.query.filter_by(category='furniture').all()
     return render_template('furniture.html', items=items)
 
 
-@app.route('/login')
+@application.route('/login')
 def login():
     # Initialize OAuth flow with Google
     # Redirect to Google's authentication page
@@ -98,7 +98,7 @@ def login():
     return oauth.google.authorize_redirect(redirect_uri=url_for('auth', _external=True), nonce=session['nonce'])
 
 
-@app.route('/auth')
+@application.route('/auth')
 def auth():
     token = oauth.google.authorize_access_token()
     user_info = google.get('userinfo').json()
@@ -119,20 +119,20 @@ def auth():
     return redirect('/')
 
 
-@app.route('/logout')
+@application.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect('/')
 
 
-@app.route('/cars')
+@application.route('/cars')
 @login_required
 def cars():
     items = Item.query.filter_by(category='cars').all()
     return render_template('cars.html', items=items)
 
 
-@app.route('/houses')
+@application.route('/houses')
 @login_required
 def houses():
     items = Item.query.filter_by(category='houses').all()
@@ -140,4 +140,4 @@ def houses():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    application.run()
