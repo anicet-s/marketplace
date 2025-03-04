@@ -43,13 +43,6 @@ resource "aws_elastic_beanstalk_environment" "marketplace_env" {
     value     = "aws-elasticbeanstalk-service-role"
   }
 
-
-  setting {
-    namespace = "aws:autoscaling:launchconfiguration"
-    name      = "IamInstanceProfile"
-    value     = "marketplace-ec2-role"
-  }
-
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "IamInstanceProfile"
