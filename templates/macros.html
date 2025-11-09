@@ -1,0 +1,108 @@
+{# Macro for rendering product cards with category-specific specifications #}
+{% macro product_card(item, category) %}
+{# Define placeholder images for each category #}
+{% set placeholders = {
+    'furniture': 'https://via.placeholder.com/400x300/E5E7EB/6B7280?text=Furniture',
+    'cars': 'https://via.placeholder.com/400x300/E5E7EB/6B7280?text=Car',
+    'houses': 'https://via.placeholder.com/400x300/E5E7EB/6B7280?text=House'
+} %}
+
+{# Select icon URL with fallback to category placeholder #}
+{% set icon = item.icon_url if item.icon_url else placeholders.get(category, 'https://via.placeholder.com/400x300/E5E7EB/6B7280?text=Product') %}
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    {# Product Icon #}
+    <div class="w-full h-48 bg-gray-200">
+        <img src="{{ icon }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+    </div>
+    
+    {# Product Details #}
+    <div class="p-6">
+        {# Product Name #}
+        <h2 class="text-xl font-bold mb-2 text-gray-800">{{ item.name }}</h2>
+        
+        {# Product Description #}
+        {% if item.description %}
+        <p class="text-gray-600 mb-4 text-sm">{{ item.description }}</p>
+        {% endif %}
+        
+        {# Specifications Section #}
+        {% if item.specifications %}
+        <div class="mb-4 border-t pt-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Specifications:</h3>
+            <ul class="space-y-1">
+                {% if category == 'furniture' %}
+                    {% if item.specifications.material %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Material:</span> {{ item.specifications.material }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.dimensions %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Dimensions:</span> {{ item.specifications.dimensions }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.condition %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Condition:</span> {{ item.specifications.condition }}
+                    </li>
+                    {% endif %}
+                {% elif category == 'cars' %}
+                    {% if item.specifications.year %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Year:</span> {{ item.specifications.year }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.make %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Make:</span> {{ item.specifications.make }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.model %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Model:</span> {{ item.specifications.model }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.mileage %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Mileage:</span> {{ "{:,}".format(item.specifications.mileage) }} miles
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.condition %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Condition:</span> {{ item.specifications.condition }}
+                    </li>
+                    {% endif %}
+                {% elif category == 'houses' %}
+                    {% if item.specifications.bedrooms %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Bedrooms:</span> {{ item.specifications.bedrooms }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.bathrooms %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Bathrooms:</span> {{ item.specifications.bathrooms }}
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.square_footage %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Square Footage:</span> {{ "{:,}".format(item.specifications.square_footage) }} sq ft
+                    </li>
+                    {% endif %}
+                    {% if item.specifications.location %}
+                    <li class="text-sm text-gray-600">
+                        <span class="font-medium">Location:</span> {{ item.specifications.location }}
+                    </li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {# Price #}
+        <div class="mt-4 pt-4 border-t">
+            <p class="text-2xl font-bold text-green-600">${{ "%.2f"|format(item.price) }}</p>
+        </div>
+    </div>
+</div>
+{% endmacro %}

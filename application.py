@@ -61,6 +61,8 @@ class Item(db.Model):
     description = db.Column(db.Text)
     price = db.Column(db.Float)
     category = db.Column(db.String(50))
+    icon_url = db.Column(db.String(500), nullable=True)
+    specifications = db.Column(db.JSON, nullable=True)
 
 
 # Login manager
@@ -93,36 +95,69 @@ def furniture():
 @application.route('/login')
 def login():
     # Initialize OAuth flow with Google
+    # Generate secure nonce for CSRF protection
+    nonce = os.urandom(16).hex()
+    session['nonce'] = nonce
+    logging.debug(f"Generated nonce and stored in session: {nonce}")
     # Redirect to Google's authentication page
-    session['nonce'] = os.urandom(16).hex()
-    return oauth.google.authorize_redirect(redirect_uri=url_for('auth', _external=True), nonce=session['nonce'])
+    return oauth.google.authorize_redirect(redirect_uri=url_for('auth', _external=True), nonce=nonce)
 
 
 @application.route('/auth')
 def auth():
-    token = oauth.google.authorize_access_token()
-    user_info = google.get('userinfo').json()
-    session['user_info'] = user_info
-    # Extract user details
-    id = user_info['id']
-    email = user_info['email']
-    name = user_info['name']
+    try:
+        # Exchange authorization code for access token
+        token = oauth.google.authorize_access_token()
+        logging.debug("Successfully exchanged authorization code for access token")
+    except Exception as e:
+        logging.error(f"Failed to exchange authorization code for token: {str(e)}")
+        return redirect(url_for('login'))
+    
+    try:
+        # Retrieve user information from Google
+        user_info = google.get('userinfo').json()
+        session['user_info'] = user_info
+        logging.debug(f"Retrieved user info: {user_info.get('email')}")
+    except Exception as e:
+        logging.error(f"Failed to retrieve user info from Google: {str(e)}")
+        return redirect(url_for('login'))
+    
+    try:
+        # Extract user details
+        id = user_info['id']
+        email = user_info['email']
+        name = user_info['name']
 
-    # Check if the user exists in the database
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        # Create a new user if not found
-        user = User(id = int(id), email = email, name = name)
-        db.session.add(user)
-        db.session.commit()
-    login_user(user)
-    return redirect('/')
+        # Check if the user exists in the database
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            # Create a new user if not found
+            user = User(id=int(id), email=email, name=name)
+            db.session.add(user)
+            db.session.commit()
+            logging.info(f"Created new user: {email}")
+        else:
+            logging.debug(f"Existing user logged in: {email}")
+        
+        # Log the user in
+        login_user(user)
+        session.permanent = True
+        return redirect('/')
+    except Exception as e:
+        logging.error(f"Database error during user creation/login: {str(e)}")
+        db.session.rollback()
+        return redirect(url_for('login'))
 
 
 @application.route('/logout')
+@login_required
 def logout():
-    session.pop('user', None)
-    return redirect('/')
+    # Log out the user using Flask-Login
+    logout_user()
+    # Clear any additional session data
+    session.clear()
+    logging.info("User logged out successfully")
+    return redirect(url_for('login'))
 
 
 @application.route('/cars')

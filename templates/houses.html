@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import product_card %}
 
 {% block title %}Houses - Marketplace{% endblock %}
 
@@ -7,13 +8,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     {% for item in items %}
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-6">
-            <h2 class="text-xl font-bold mb-2">{{ item.name }}</h2>
-            <p class="text-gray-600 mb-4">{{ item.description }}</p>
-            <p class="text-2xl font-bold text-green-600">${{ "%.2f"|format(item.price) }}</p>
-        </div>
-    </div>
+        {{ product_card(item, 'houses') }}
     {% endfor %}
 </div>
 {% endblock %}
