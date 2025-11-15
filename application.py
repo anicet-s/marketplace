@@ -9,7 +9,6 @@ import json
 import requests
 from authlib.integrations.flask_client import OAuth
 import logging
-from sqlalchemy.dialects.postgresql import BIGINT
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -49,7 +48,7 @@ google = oauth.register(
 
 # User model
 class User(UserMixin, db.Model):
-    id = db.Column(BIGINT, primary_key=True)
+    id = db.Column(db.String(255), primary_key=True)
     email = db.Column(db.String(100), unique=True)
     name = db.Column(db.String(100))
 
@@ -73,7 +72,7 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return User.query.get(str(user_id))
 
 
 # Routes
@@ -132,7 +131,7 @@ def auth():
         user = User.query.filter_by(email=email).first()
         if not user:
             # Create a new user if not found
-            user = User(id=int(id), email=email, name=name)
+            user = User(id=str(id), email=email, name=name)
             db.session.add(user)
             db.session.commit()
             logging.info(f"Created new user: {email}")
